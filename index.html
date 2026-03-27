@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookMatch — MMBA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-mid: #9FE1CB;
+    --teal-dark: #0F6E56;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-mid: #FAC775;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --coral-mid: #F5C4B3;
+    --gray-50: #F8F7F4;
+    --gray-100: #EDEDEA;
+    --gray-200: #D5D4CE;
+    --gray-400: #8A8880;
+    --gray-600: #5A5956;
+    --gray-900: #1C1C1A;
+    --white: #FFFFFF;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-pill: 20px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--teal);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .logo-text { font-size: 17px; font-weight: 600; color: var(--gray-900); }
+  .logo-text span { color: var(--teal); }
+  .header-badge { font-size: 11px; font-weight: 500; background: var(--teal-light); color: var(--teal-dark); padding: 3px 10px; border-radius: var(--radius-pill); }
+
+  /* ── MAIN LAYOUT ── */
+  main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+  /* ── STATS BAR ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 12px; color: var(--gray-400); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .stat-num { font-size: 26px; font-weight: 600; }
+  .stat-num.green { color: var(--teal); }
+  .stat-num.amber { color: var(--amber); }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--gray-100);
+    padding: 3px;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab:hover { color: var(--gray-900); }
+  .tab.active {
+    background: var(--white);
+    color: var(--gray-900);
+    box-shadow: var(--shadow);
+  }
+
+  /* ── FILTER PILLS ── */
+  .filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .pill {
+    padding: 5px 13px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .pill:hover { border-color: var(--teal); color: var(--teal); }
+  .pill.active { background: var(--teal-light); border-color: var(--teal-mid); color: var(--teal-dark); }
+
+  /* ── SEARCH ── */
+  .search-wrap { position: relative; margin-bottom: 1rem; }
+  .search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--gray-400); fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 38px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--white);
+    color: var(--gray-900);
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { outline: none; border-color: var(--teal); }
+  .search-input::placeholder { color: var(--gray-400); }
+
+  /* ── BOOK CARDS ── */
+  .card-grid { display: flex; flex-direction: column; gap: 10px; }
+  .book-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .book-card:hover { border-color: var(--gray-200); box-shadow: var(--shadow-md); }
+  .book-card.has-match { border-left: 3px solid var(--teal); }
+  .book-card.is-taken { opacity: 0.6; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .card-title { font-size: 15px; font-weight: 500; color: var(--gray-900); line-height: 1.35; flex: 1; }
+  .badge-row { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+  }
+  .badge.sell { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-mid); }
+  .badge.rent { background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
+  .badge.want-buy { background: var(--coral-light); color: var(--coral); border: 1px solid var(--coral-mid); }
+  .badge.want-rent { background: #FBF0FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+  .badge.available { background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
+  .badge.taken { background: var(--gray-100); color: var(--gray-400); border: 1px solid var(--gray-200); }
+
+  .card-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; color: var(--gray-400); display: flex; align-items: center; gap: 5px; }
+  .meta-icon { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+
+  .match-bar {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: var(--teal-light);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--teal-dark);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 500;
+  }
+  .match-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+  }
+
+  /* ── PANELS ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── REQUEST FORM ── */
+  .request-form-wrap {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+  }
+  .form-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 500; color: var(--gray-600); }
+  input[type="text"], select {
+    padding: 8px 11px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--gray-900);
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input[type="text"]:focus, select:focus { outline: none; border-color: var(--teal); }
+  input::placeholder { color: var(--gray-400); }
+  .btn-submit {
+    padding: 9px 20px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 4px;
+  }
+  .btn-submit:hover { background: var(--teal-dark); }
+  .success-msg { color: var(--teal-dark); font-size: 13px; margin-top: 10px; display: none; }
+
+  .contact-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    margin-top: 8px;
+    transition: all 0.15s;
+    border: 1px solid;
+  }
+  .whatsapp-link { color: #128C7E; background: #E8F8F5; border-color: #A8DDD6; }
+  .whatsapp-link:hover { background: #C8EDE9; }
+  .email-link { color: var(--teal-dark); background: var(--teal-light); border-color: var(--teal-mid); }
+  .email-link:hover { background: var(--teal-mid); }
+
+  /* ── STATUS TOGGLE ── */
+  .status-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 12px; font-weight: 500; font-family: inherit;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    border: 1px dashed var(--gray-200);
+    background: transparent;
+    color: var(--gray-400);
+    transition: all 0.15s;
+  }
+  .status-toggle:hover { border-color: var(--gray-400); color: var(--gray-600); }
+  .status-toggle.is-taken { border-color: var(--teal-mid); color: var(--teal-dark); }
+  .status-toggle.is-taken:hover { background: var(--teal-light); }
+
+  /* ── PIN MODAL ── */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: var(--radius);
+    padding: 1.5rem; width: 320px; box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-100);
+  }
+  .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--gray-600); margin-bottom: 1rem; line-height: 1.5; }
+  .modal input[type="text"] { margin-bottom: 10px; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-cancel {
+    padding: 8px 16px; font-size: 13px; font-family: inherit;
+    border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    background: transparent; color: var(--gray-600); cursor: pointer;
+  }
+  .btn-cancel:hover { background: var(--gray-50); }
+  .modal-err { font-size: 12px; color: var(--coral); margin-bottom: 8px; display: none; }
+
+  /* ── LOADING / EMPTY ── */
+  .loading { text-align: center; padding: 3rem; color: var(--gray-400); font-size: 14px; }
+  .loading-spin {
+    width: 24px; height: 24px;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 3rem; color: var(--gray-400); font-size: 14px; }
+  .config-note {
+    background: var(--amber-light);
+    border: 1px solid var(--amber-mid);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--amber);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  .config-note code { font-family: 'DM Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+  .config-note strong { font-weight: 600; }
+
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat-card:last-child { grid-column: 1 / -1; }
+    header { padding: 0 1rem; }
+    main { padding: 1rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <span class="logo-text">Book<span>Match</span></span>
+    </a>
+    <span class="header-badge">MMBA</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- CONFIG NOTE — visible until Sheets IDs are set -->
+  <div class="config-note" id="config-note">
+    <strong>Setup required:</strong> Open this file and set <code>ALUMNI_SHEET_ID</code> and <code>STUDENT_SHEET_ID</code> at the top of the script to your Google Sheets IDs. Also make both sheets public (<em>Share → Anyone with link → Viewer</em>). Then remove this notice.
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Books offered</div>
+      <div class="stat-num green" id="stat-offer">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Requests open</div>
+      <div class="stat-num amber" id="stat-want">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Matches found</div>
+      <div class="stat-num" id="stat-match">—</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('browse')">📚 Browse books</button>
+    <button class="tab" onclick="switchTab('offer')">📤 Offer a book</button>
+    <button class="tab" onclick="switchTab('want')">🙋 Request a book</button>
+  </div>
+
+  <!-- BROWSE PANEL -->
+  <div class="panel active" id="panel-browse">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" type="text" id="search-browse" placeholder="Search by book title, module…" oninput="renderBrowse()">
+    </div>
+    <div class="filters" id="filters-browse">
+      <button class="pill active" onclick="setFilter(this,'browse','all')">All available</button>
+      <button class="pill" onclick="setFilter(this,'browse','sell')">For sale</button>
+      <button class="pill" onclick="setFilter(this,'browse','rent')">For rent</button>
+      <button class="pill" onclick="setFilter(this,'browse','international environment of business')">IEB</button>
+      <button class="pill" onclick="setFilter(this,'browse','entrepreneurship & new business development')">Entrepreneurship</button>
+      <button class="pill" onclick="setFilter(this,'browse','managing organisations in times of change')">Managing orgs</button>
+      <button class="pill" onclick="setFilter(this,'browse','corporate finance & accounting')">Corp. finance</button>
+      <button class="pill" onclick="setFilter(this,'browse','sustaining competitive advantage')">Comp. advantage</button>
+      <button class="pill" onclick="setFilter(this,'browse','digital management (d1)')">Digital mgmt</button>
+      <button class="pill" onclick="setFilter(this,'browse','digital strategy (d2)')">Digital strategy</button>
+      <button class="pill" onclick="setFilter(this,'browse','leading strategic change (l1)')">Leading change</button>
+      <button class="pill" onclick="setFilter(this,'browse','personal leadership (l2)')">Leadership</button>
+      <button class="pill" onclick="setFilter(this,'browse','sustainability & business ethics (s1)')">Sustainability</button>
+      <button class="pill" onclick="setFilter(this,'browse','future-proof business models (s2)')">Future-proof</button>
+      <button class="pill" onclick="setFilter(this,'browse','others')">Others</button>
+    </div>
+    <div id="browse-list" class="card-grid">
+      <div class="loading"><div class="loading-spin"></div>Loading books…</div>
+    </div>
+  </div>
+
+  <!-- OFFER A BOOK PANEL -->
+  <div class="panel" id="panel-offer">
+    <div class="request-form-wrap">
+      <div class="form-title">Offer a book — sell or rent</div>
+      <p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem;line-height:1.6;">Got a physical textbook? Current MMBA students only have digital versions. List it here so they can find you.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="off-name">Your name *</label>
+          <input type="text" id="off-name" placeholder="e.g. Thomas V.">
+        </div>
+        <div class="form-group">
+          <label for="off-contact">WhatsApp / email *</label>
+          <input type="text" id="off-contact" placeholder="+32…  or  you@email.com">
+        </div>
+        <div class="form-group full">
+          <label for="off-book">Book name *</label>
+          <input type="text" id="off-book" placeholder="e.g. Financial Reporting & Analysis">
+        </div>
+        <div class="form-group">
+          <label for="off-module">Module</label>
+          <select id="off-module">
+            <option value="">— select —</option>
+            <option>international environment of business</option>
+            <option>entrepreneurship & new business development</option>
+            <option>managing organisations in times of change</option>
+            <option>corporate finance & accounting</option>
+            <option>sustaining competitive advantage</option>
+            <option>digital management (d1)</option>
+            <option>digital strategy (d2)</option>
+            <option>leading strategic change (l1)</option>
+            <option>personal leadership (l2)</option>
+            <option>sustainability & business ethics (s1)</option>
+            <option>future-proof business models (s2)</option>
+            <option>others</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="off-mode">Sell or rent?</label>
+          <select id="off-mode">
+            <option value="Sell">Sell</option>
+            <option value="Rent">Rent</option>
+            <option value="Sell or Rent">Sell or Rent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="off-price">Price (optional)</label>
+          <input type="text" id="off-price" placeholder="e.g. €45 or €20/mo">
+        </div>
+        <div class="form-group">
+          <label for="off-region">Country / Region</label>
+          <input type="text" id="off-region" placeholder="e.g. Belgium">
+        </div>
+        <div class="form-group full">
+          <label for="off-pin">Set a PIN to manage your listing *</label>
+          <input type="text" id="off-pin" placeholder="e.g. mmba2024 — you'll need this to mark the book as taken">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="submitOffer()">List my book</button>
+      <div class="success-msg" id="off-success">✓ Your book is now listed! Students looking for it will see your contact.</div>
+    </div>
+  </div>
+
+  <!-- REQUEST A BOOK PANEL -->
+  <div class="panel" id="panel-want">
+    <div class="request-form-wrap">
+      <div class="form-title">Request a book</div>
+      <p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem;line-height:1.6;">Looking for a physical copy? Submit your request and alumni with that book will be able to find you.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="req-name">Your name *</label>
+          <input type="text" id="req-name" placeholder="e.g. Maria S.">
+        </div>
+        <div class="form-group">
+          <label for="req-contact">WhatsApp / email *</label>
+          <input type="text" id="req-contact" placeholder="+32…  or  you@email.com">
+        </div>
+        <div class="form-group full">
+          <label for="req-book">Book name *</label>
+          <input type="text" id="req-book" placeholder="e.g. Financial Reporting & Analysis">
+        </div>
+        <div class="form-group">
+          <label for="req-module">Module</label>
+          <select id="req-module">
+            <option value="">— select —</option>
+            <option>international environment of business</option>
+            <option>entrepreneurship & new business development</option>
+            <option>managing organisations in times of change</option>
+            <option>corporate finance & accounting</option>
+            <option>sustaining competitive advantage</option>
+            <option>digital management (d1)</option>
+            <option>digital strategy (d2)</option>
+            <option>leading strategic change (l1)</option>
+            <option>personal leadership (l2)</option>
+            <option>sustainability & business ethics (s1)</option>
+            <option>future-proof business models (s2)</option>
+            <option>others</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="req-mode">Looking to…</label>
+          <select id="req-mode">
+            <option value="Buy">Buy</option>
+            <option value="Rent">Rent</option>
+            <option value="Buy or Rent">Buy or Rent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="req-region">Country / Region</label>
+          <input type="text" id="req-region" placeholder="e.g. Belgium">
+        </div>
+        <div class="form-group full">
+          <label for="req-pin">Set a PIN to manage your request *</label>
+          <input type="text" id="req-pin" placeholder="e.g. mmba2024 — you'll need this to remove the request once found">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="submitRequest()">Submit request</button>
+      <div class="success-msg" id="req-success">✓ Request saved! Alumni with this book will see your listing.</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- PIN MODAL -->
+<div class="modal-backdrop" id="pin-modal">
+  <div class="modal">
+    <h3 id="pin-title">Confirm your identity</h3>
+    <p id="pin-desc">Enter the PIN you set when you listed this book to update its status.</p>
+    <input type="text" id="pin-input" placeholder="Your PIN" maxlength="20" style="letter-spacing:0.1em;">
+    <div class="modal-err" id="pin-err">Incorrect PIN. Please try again.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="confirmPin()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIGURATION — set your Google Sheets IDs
+// ─────────────────────────────────────────────
+const ALUMNI_SHEET_ID  = "145fMegvrrynNwqX7FPsOlJ9DgFFAOQiaJZr8bnqKZR8"; // alumni offers sheet
+const STUDENT_SHEET_ID = "YOUR_STUDENT_REQUESTS_SHEET_ID";                  // student requests sheet (create new)
+
+// Column mapping for Alumni sheet (0-indexed, adjust to match your sheet)
+// Expected columns: Timestamp | Offer/Want | Name | Contact | Book | Module | Sell/Rent | Price | Region | Status
+const COL_ALUMNI = { type:1, name:2, contact:3, book:4, module:5, mode:6, price:7, region:8, status:9 };
+
+// Column mapping for Student requests sheet
+// Expected columns: Timestamp | Name | Contact | Book | Module | Mode | Region
+const COL_STUDENT = { name:1, contact:2, book:3, module:4, mode:5, region:6 };
+
+// ─────────────────────────────────────────────
+
+let alumniData   = [];   // books offered by alumni
+let studentData  = [];   // requests from students
+let browseFilter = "all";
+let reqFilter    = "all";
+
+// ── Fetch Google Sheets via gviz API ──────────
+async function fetchSheet(sheetId, colMap) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    const rows = json.table.rows;
+    return rows.map(r => {
+      const get = i => (r.c && r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : "";
+      return Object.fromEntries(Object.entries(colMap).map(([k,i]) => [k, get(i)]));
+    }).filter(r => r.book);
+  } catch(e) {
+    console.warn("Sheet fetch failed:", sheetId, e);
+    return [];
+  }
+}
+
+async function loadData() {
+  const [alumni, students] = await Promise.all([
+    fetchSheet(ALUMNI_SHEET_ID, COL_ALUMNI),
+    STUDENT_SHEET_ID !== "YOUR_STUDENT_REQUESTS_SHEET_ID"
+      ? fetchSheet(STUDENT_SHEET_ID, COL_STUDENT)
+      : Promise.resolve([])
+  ]);
+
+  // Alumni sheet has both offer & want rows — split them
+  alumniData  = alumni.filter(r => r.type && r.type.toLowerCase().includes("have"));
+  studentData = [
+    ...students,
+    ...alumni.filter(r => r.type && r.type.toLowerCase().includes("want"))
+  ];
+
+  // If sheet ID is real, hide config note
+  if (ALUMNI_SHEET_ID !== "YOUR_ALUMNI_SHEET_ID") {
+    document.getElementById("config-note").style.display = "none";
+  }
+
+  // Merge locally submitted offers
+  alumniData = [...alumniData, ...storedOffers];
+
+  updateStats();
+  renderBrowse();
+  renderRequests();
+}
+
+function updateStats() {
+  const available = alumniData.filter(b => (b.status||"").toLowerCase() !== "taken");
+  const matches   = available.filter(b => getMatches(b).length > 0);
+  document.getElementById("stat-offer").textContent  = available.length;
+  document.getElementById("stat-want").textContent   = studentData.length;
+  document.getElementById("stat-match").textContent  = matches.length;
+}
+
+function getMatches(book) {
+  // find student requests for the same book title
+  return studentData.filter(s =>
+    s.book.toLowerCase().replace(/[^a-z0-9]/g,"") ===
+    book.book.toLowerCase().replace(/[^a-z0-9]/g,"")
+  );
+}
+
+function getOffers(req) {
+  return alumniData.filter(b =>
+    b.book.toLowerCase().replace(/[^a-z0-9]/g,"") ===
+    req.book.toLowerCase().replace(/[^a-z0-9]/g,"") &&
+    (b.status||"").toLowerCase() !== "taken"
+  );
+}
+
+// ── RENDER BROWSE ─────────────────────────────
+function renderBrowse() {
+  const q   = document.getElementById("search-browse").value.toLowerCase();
+  // Always hide taken books
+  let items = alumniData.filter(b => (b.status||"").toLowerCase() !== "taken");
+
+  if (browseFilter === "sell")           items = items.filter(b => (b.mode||"").toLowerCase() === "sell");
+  else if (browseFilter === "rent")      items = items.filter(b => (b.mode||"").toLowerCase() === "rent");
+  else if (browseFilter !== "all")       items = items.filter(b => (b.module||"").toLowerCase() === browseFilter);
+
+  if (q) items = items.filter(b =>
+    b.book.toLowerCase().includes(q) ||
+    (b.module||"").toLowerCase().includes(q) ||
+    (b.name||"").toLowerCase().includes(q)
+  );
+
+  const list = document.getElementById("browse-list");
+  if (items.length === 0) { list.innerHTML = '<div class="empty">No books found.</div>'; return; }
+
+  list.innerHTML = items.map(b => {
+    const matches  = getMatches(b);
+    const isTaken   = (b.status||"").toLowerCase() === "taken";
+    const modeKey   = (b.mode||"sell").toLowerCase();
+    const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
+    const toggleBtn = b.local && b.id ? `
+      <button class="status-toggle" onclick="requestToggle('${b.id}')">
+        <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Mark as taken
+      </button>` : "";
+    return `<div class="book-card ${matches.length ? "has-match":""}">
+      <div class="card-top">
+        <div class="card-title">${esc(b.book)}</div>
+        <div class="badge-row">
+          <span class="badge ${modeKey}">${modeLabel}</span>
+          <span class="badge available">Available</span>
+        </div>
+      </div>
+      <div class="card-meta">
+        ${b.module ? `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>${esc(b.module)}</span>` : ""}
+        ${b.price ? `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>${esc(b.price)}</span>` : ""}
+        ${b.region ? `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(b.region)}</span>` : ""}
+        <span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(b.name)}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+        ${b.contact ? contactLink(b.contact) : ""}
+      </div>
+      ${matches.length ? `<div class="match-bar"><div class="match-dot"></div>${matches.length} student${matches.length>1?"s":""} looking for this book</div>` : ""}
+      ${toggleBtn}
+    </div>`;
+  }).join("");
+}
+
+// ── RENDER REQUESTS ───────────────────────────
+function renderRequests() {
+  const q   = document.getElementById("search-requests").value.toLowerCase();
+  let items = studentData;
+  if (q) items = items.filter(r =>
+    r.book.toLowerCase().includes(q) ||
+    (r.module||"").toLowerCase().includes(q)
+  );
+
+  const list = document.getElementById("requests-list");
+  if (items.length === 0) { list.innerHTML = '<div class="empty">No requests yet.</div>'; return; }
+
+  list.innerHTML = items.map(r => {
+    const offers    = getOffers(r);
+    const modeLabel = (r.mode||"buy/rent");
+    const modeKey   = modeLabel.toLowerCase().includes("rent") && modeLabel.toLowerCase().includes("buy") ? "want-rent"
+                    : modeLabel.toLowerCase().includes("rent") ? "want-rent" : "want-buy";
+    const foundBtn  = r.local && r.id ? `
+      <button class="status-toggle is-taken" onclick="requestFoundIt('${r.id}')">
+        <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Found it — remove request
+      </button>` : "";
+    return `<div class="book-card ${offers.length?"has-match":""}">
+      <div class="card-top">
+        <div class="card-title">${esc(r.book)}</div>
+        <div class="badge-row">
+          <span class="badge ${modeKey}">Looking to ${esc(modeLabel.toLowerCase())}</span>
+        </div>
+      </div>
+      <div class="card-meta">
+        ${r.module ? `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>${esc(r.module)}</span>` : ""}
+        ${r.region ? `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(r.region)}</span>` : ""}
+        <span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(r.name)}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+        ${r.contact ? contactLink(r.contact) : ""}
+      </div>
+      ${offers.length ? `<div class="match-bar"><div class="match-dot"></div>Alumni offering: ${offers.map(o=>esc(o.name)).join(", ")} — connect via contacts above</div>` : ""}
+      ${foundBtn}
+    </div>`;
+  }).join("");
+}
+
+// ── OFFER A BOOK FORM ─────────────────────────
+function submitOffer() {
+  const name    = document.getElementById("off-name").value.trim();
+  const contact = document.getElementById("off-contact").value.trim();
+  const book    = document.getElementById("off-book").value.trim();
+  const module  = document.getElementById("off-module").value;
+  const mode    = document.getElementById("off-mode").value;
+  const price   = document.getElementById("off-price").value.trim();
+  const region  = document.getElementById("off-region").value.trim();
+  const pin     = document.getElementById("off-pin").value.trim();
+
+  if (!name || !contact || !book) {
+    alert("Please fill in Name, Contact, and Book name.");
+    return;
+  }
+  if (!pin) {
+    alert("Please set a PIN so you can update the status later.");
+    return;
+  }
+
+  const entry = {
+    id: "local_" + Date.now(),
+    name, contact, book, module,
+    mode: mode === "Sell" || mode === "Sell or Rent" ? "sell" : "rent",
+    price, region, status: "Available", pin, local: true
+  };
+  alumniData.push(entry);
+
+  const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
+  stored.push(entry);
+  localStorage.setItem("bm_offers", JSON.stringify(stored));
+
+  updateStats();
+  renderBrowse();
+  document.getElementById("off-success").style.display = "block";
+  ["off-name","off-contact","off-book","off-price","off-region","off-pin"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("off-module").value = "";
+  document.getElementById("off-mode").value = "Sell";
+  setTimeout(() => document.getElementById("off-success").style.display = "none", 4000);
+}
+
+// ── STUDENT REQUEST FORM ──────────────────────
+function submitRequest() {
+  const name    = document.getElementById("req-name").value.trim();
+  const contact = document.getElementById("req-contact").value.trim();
+  const book    = document.getElementById("req-book").value.trim();
+  const module  = document.getElementById("req-module").value;
+  const mode    = document.getElementById("req-mode").value;
+  const region  = document.getElementById("req-region").value.trim();
+  const pin     = document.getElementById("req-pin").value.trim();
+
+  if (!name || !contact || !book) {
+    alert("Please fill in Name, Contact, and Book name.");
+    return;
+  }
+  if (!pin) {
+    alert("Please set a PIN so you can remove the request once you've found the book.");
+    return;
+  }
+
+  const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, pin, local: true };
+  studentData.push(entry);
+
+  const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
+  stored.push(entry);
+  localStorage.setItem("bm_requests", JSON.stringify(stored));
+
+  updateStats();
+  renderRequests();
+  document.getElementById("req-success").style.display = "block";
+  ["req-name","req-contact","req-book","req-region","req-pin"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("req-module").value = "";
+  document.getElementById("req-mode").value = "Buy";
+  setTimeout(() => document.getElementById("req-success").style.display = "none", 4000);
+}
+
+// ── STATUS TOGGLE ─────────────────────────────
+let pendingToggleId  = null;
+let pendingToggleType = null; // "offer" | "request"
+
+function requestToggle(id) {
+  pendingToggleId   = id;
+  pendingToggleType = "offer";
+  const book = alumniData.find(b => b.id === id);
+  document.getElementById("pin-title").textContent = "Mark as taken";
+  document.getElementById("pin-desc").textContent  = `Enter your PIN to confirm "${book.book}" is no longer available. It will be removed from the list.`;
+  document.getElementById("pin-input").value = "";
+  document.getElementById("pin-err").style.display = "none";
+  document.getElementById("pin-modal").classList.add("open");
+  setTimeout(() => document.getElementById("pin-input").focus(), 50);
+}
+
+function requestFoundIt(id) {
+  pendingToggleId   = id;
+  pendingToggleType = "request";
+  const req = studentData.find(r => r.id === id);
+  document.getElementById("pin-title").textContent = "Found it!";
+  document.getElementById("pin-desc").textContent  = `Enter your PIN to confirm and remove your request for "${req.book}" from the list.`;
+  document.getElementById("pin-input").value = "";
+  document.getElementById("pin-err").style.display = "none";
+  document.getElementById("pin-modal").classList.add("open");
+  setTimeout(() => document.getElementById("pin-input").focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById("pin-modal").classList.remove("open");
+  pendingToggleId   = null;
+  pendingToggleType = null;
+}
+
+function confirmPin() {
+  const entered = document.getElementById("pin-input").value.trim();
+
+  if (pendingToggleType === "offer") {
+    const book = alumniData.find(b => b.id === pendingToggleId);
+    if (!book || entered !== book.pin) { document.getElementById("pin-err").style.display = "block"; return; }
+    book.status = "Taken";
+    const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
+    const idx = stored.findIndex(b => b.id === book.id);
+    if (idx !== -1) { stored[idx].status = "Taken"; localStorage.setItem("bm_offers", JSON.stringify(stored)); }
+    closeModal();
+    updateStats();
+    renderBrowse();
+
+  } else if (pendingToggleType === "request") {
+    const req = studentData.find(r => r.id === pendingToggleId);
+    if (!req || entered !== req.pin) { document.getElementById("pin-err").style.display = "block"; return; }
+    studentData = studentData.filter(r => r.id !== pendingToggleId);
+    const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
+    localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== pendingToggleId)));
+    closeModal();
+    updateStats();
+    renderRequests();
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById("pin-modal").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+// Enter key in PIN field
+document.getElementById("pin-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") confirmPin();
+});
+function contactLink(contact) {
+  if (!contact) return "";
+  const c = contact.trim();
+  // WhatsApp: starts with + or is all digits/spaces/dashes
+  const isPhone = /^[\+\d][\d\s\-\(\)]{4,}/.test(c);
+  if (isPhone) {
+    const digits = c.replace(/\D/g, "");
+    const waUrl  = `https://wa.me/${digits}`;
+    return `<a href="${waUrl}" target="_blank" class="contact-link whatsapp-link">
+      <svg style="width:13px;height:13px;fill:currentColor;flex-shrink:0" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.121 1.532 5.856L.057 23.882l6.186-1.622A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.373l-.36-.214-3.724.976.994-3.629-.235-.373A9.818 9.818 0 0 1 2.182 12c0-5.42 4.398-9.818 9.818-9.818 5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/></svg>
+      ${esc(c)}
+    </a>`;
+  }
+  // Email
+  if (c.includes("@")) {
+    return `<a href="mailto:${esc(c)}" class="contact-link email-link">
+      <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      ${esc(c)}
+    </a>`;
+  }
+  // Fallback: plain text
+  return `<span class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${esc(c)}</span>`;
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((t,i) => {
+    t.classList.toggle("active", ["browse","offer","want"][i] === name);
+  });
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("panel-"+name).classList.add("active");
+}
+
+function setFilter(btn, panel, val) {
+  document.querySelectorAll(`#filters-${panel} .pill`).forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if (panel === "browse") { browseFilter = val; renderBrowse(); }
+  else { reqFilter = val; renderRequests(); }
+}
+
+// Load stored local data
+const storedReqs   = JSON.parse(localStorage.getItem("bm_requests") || "[]");
+const storedOffers = JSON.parse(localStorage.getItem("bm_offers") || "[]");
+studentData = [...storedReqs];
+
+// Boot
+loadData();
+</script>
+</body>
+</html>

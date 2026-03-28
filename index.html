@@ -579,6 +579,8 @@
 const ALUMNI_SHEET_ID  = "145fMegvrrynNwqX7FPsOlJ9DgFFAOQiaJZr8bnqKZR8"; // alumni offers sheet
 const STUDENT_SHEET_ID = "YOUR_STUDENT_REQUESTS_SHEET_ID";                  // student requests sheet (create new)
 
+const MASTER_PIN = "mmba"; // ← change this anytime to a new master PIN
+
 // Column mapping for Alumni sheet (0-indexed, adjust to match your sheet)
 // Expected columns: Timestamp | Offer/Want | Name | Contact | Book | Module | Sell/Rent | Price | Region | Status
 const COL_ALUMNI = { type:1, name:2, contact:3, book:4, module:5, mode:6, price:7, region:8, status:9 };
@@ -871,10 +873,11 @@ function closeModal() {
 
 function confirmPin() {
   const entered = document.getElementById("pin-input").value.trim();
+  const isAdmin = entered === MASTER_PIN;
 
   if (pendingToggleType === "offer") {
     const book = alumniData.find(b => b.id === pendingToggleId);
-    if (!book || entered !== book.pin) { document.getElementById("pin-err").style.display = "block"; return; }
+    if (!book || (!isAdmin && entered !== book.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
     book.status = "Taken";
     const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
     const idx = stored.findIndex(b => b.id === book.id);
@@ -885,7 +888,7 @@ function confirmPin() {
 
   } else if (pendingToggleType === "request") {
     const req = studentData.find(r => r.id === pendingToggleId);
-    if (!req || entered !== req.pin) { document.getElementById("pin-err").style.display = "block"; return; }
+    if (!req || (!isAdmin && entered !== req.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
     studentData = studentData.filter(r => r.id !== pendingToggleId);
     const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
     localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== pendingToggleId)));

@@ -796,7 +796,6 @@ async function postToSheet(spreadsheetId, row) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "append", row })
     });
@@ -807,7 +806,6 @@ async function updateSheetStatus(spreadsheetId, book, contact) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "updateStatus", book, contact })
     });
@@ -818,7 +816,6 @@ async function deleteSheetRow(spreadsheetId, book, contact) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "deleteRow", book, contact })
     });

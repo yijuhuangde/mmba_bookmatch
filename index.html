@@ -793,14 +793,11 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdZ7NyT8L2VqAv
 
 function callScript(params) {
   const url = `${APPS_SCRIPT_URL}?${new URLSearchParams(params)}`;
-  let iframe = document.getElementById("_script_iframe");
-  if (!iframe) {
-    iframe = document.createElement("iframe");
-    iframe.id = "_script_iframe";
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-  }
-  iframe.src = url;
+  const script = document.createElement("script");
+  script.src = url;
+  script.onerror = () => {};
+  document.head.appendChild(script);
+  setTimeout(() => { try { document.head.removeChild(script); } catch(e) {} }, 5000);
 }
 
 function postToSheet(spreadsheetId, row) {

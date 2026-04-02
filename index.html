@@ -194,6 +194,7 @@
   }
   .badge.sell { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-mid); }
   .badge.rent { background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
+  .badge.sell-or-rent { background: #F0EEFF; color: #5B3FC7; border: 1px solid #C4B5F4; }
   .badge.want-buy { background: var(--coral-light); color: var(--coral); border: 1px solid var(--coral-mid); }
   .badge.want-rent { background: #FBF0FF; color: #7C3AED; border: 1px solid #DDD6FE; }
   .badge.available { background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
@@ -710,9 +711,10 @@ function renderBrowse() {
   list.innerHTML = items.map(b => {
     const matches  = getMatches(b);
     const isTaken   = (b.status||"").toLowerCase() === "taken";
-    const modeKey   = (b.mode||"sell").toLowerCase().includes("rent") && (b.mode||"").toLowerCase().includes("sell") ? "sell"
-                    : (b.mode||"sell").toLowerCase().includes("rent") ? "rent" : "sell";
-    const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
+    const rawMode   = (b.mode||"sell").toLowerCase();
+    const modeKey   = rawMode.includes("rent") && rawMode.includes("sell") ? "sell-or-rent"
+                    : rawMode.includes("rent") ? "rent" : "sell";
+    const modeLabel = modeKey === "rent" ? "For rent" : modeKey === "sell-or-rent" ? "Sell or rent" : "For sale";
     const toggleBtn = `
       <button class="status-toggle" onclick="requestToggle('${registerItem(b)}')">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -794,7 +796,7 @@ async function postToSheet(spreadsheetId, row) {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ spreadsheetId, action: "append", row })
     });
   } catch(e) { console.warn("Sheet post failed:", e); }
@@ -805,7 +807,7 @@ async function updateSheetStatus(spreadsheetId, book, contact) {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ spreadsheetId, action: "updateStatus", book, contact })
     });
   } catch(e) { console.warn("Sheet update failed:", e); }
@@ -816,7 +818,7 @@ async function deleteSheetRow(spreadsheetId, book, contact) {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ spreadsheetId, action: "deleteRow", book, contact })
     });
   } catch(e) { console.warn("Sheet delete failed:", e); }

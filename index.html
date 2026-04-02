@@ -659,10 +659,6 @@ async function loadData() {
   // Hide config note since sheets are configured
   document.getElementById("config-note").style.display = "none";
 
-  // Merge locally submitted offers and requests
-  alumniData  = [...alumniData,  ...storedOffers];
-  studentData = [...studentData, ...storedReqs];
-
   updateStats();
   renderBrowse();
   renderRequests();
@@ -714,7 +710,8 @@ function renderBrowse() {
   list.innerHTML = items.map(b => {
     const matches  = getMatches(b);
     const isTaken   = (b.status||"").toLowerCase() === "taken";
-    const modeKey   = (b.mode||"sell").toLowerCase();
+    const modeKey   = (b.mode||"sell").toLowerCase().includes("rent") && (b.mode||"").toLowerCase().includes("sell") ? "sell"
+                    : (b.mode||"sell").toLowerCase().includes("rent") ? "rent" : "sell";
     const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
     const toggleBtn = `
       <button class="status-toggle" onclick="requestToggle('${registerItem(b)}')">
@@ -796,6 +793,7 @@ async function postToSheet(spreadsheetId, row) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "append", row })
     });
@@ -806,6 +804,7 @@ async function updateSheetStatus(spreadsheetId, book, contact) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "updateStatus", book, contact })
     });
@@ -816,6 +815,7 @@ async function deleteSheetRow(spreadsheetId, book, contact) {
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ spreadsheetId, action: "deleteRow", book, contact })
     });
@@ -841,11 +841,9 @@ function submitOffer() {
 
   postToSheet(ALUMNI_SHEET_ID, [timestamp, name, contact, book, module, mode, price, region, "Available"]);
 
+  // Show immediately without localStorage (Google Sheets is source of truth)
   const entry = { id: "local_" + Date.now(), name, contact, book, module, mode: modeVal, price, region, status: "Available", local: true };
   alumniData.push(entry);
-  const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-  stored.push(entry);
-  localStorage.setItem("bm_offers", JSON.stringify(stored));
 
   updateStats();
   renderBrowse();
@@ -874,11 +872,9 @@ function submitRequest() {
 
   postToSheet(STUDENT_SHEET_ID, [timestamp, name, contact, book, module, mode, region]);
 
+  // Show immediately without localStorage (Google Sheets is source of truth)
   const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, local: true };
   studentData.push(entry);
-  const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
-  stored.push(entry);
-  localStorage.setItem("bm_requests", JSON.stringify(stored));
 
   updateStats();
   renderRequests();
@@ -1011,10 +1007,9 @@ function setFilter(btn, panel, val) {
   else { reqFilter = val; renderRequests(); }
 }
 
-// Load stored local data
-const storedReqs   = JSON.parse(localStorage.getItem("bm_requests") || "[]");
-const storedOffers = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-studentData = [...storedReqs];
+// Clear old localStorage data — Google Sheets is now the source of truth
+localStorage.removeItem("bm_requests");
+localStorage.removeItem("bm_offers");
 
 // Boot
 loadData();

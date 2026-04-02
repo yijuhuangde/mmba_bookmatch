@@ -404,6 +404,7 @@
   <!-- TABS -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('browse')">📚 Browse books</button>
+    <button class="tab" onclick="switchTab('requests')">🔍 Requests</button>
     <button class="tab" onclick="switchTab('offer')">📤 Offer a book</button>
     <button class="tab" onclick="switchTab('want')">🙋 Request a book</button>
   </div>
@@ -433,6 +434,17 @@
     </div>
     <div id="browse-list" class="card-grid">
       <div class="loading"><div class="loading-spin"></div>Loading books…</div>
+    </div>
+  </div>
+
+  <!-- REQUESTS PANEL -->
+  <div class="panel" id="panel-requests">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" type="text" id="search-requests" placeholder="Search requests by title, module…" oninput="renderRequests()">
+    </div>
+    <div id="requests-list" class="card-grid">
+      <div class="loading"><div class="loading-spin"></div>Loading requests…</div>
     </div>
   </div>
 
@@ -936,7 +948,7 @@ function esc(s) {
 
 function switchTab(name) {
   document.querySelectorAll(".tab").forEach((t,i) => {
-    t.classList.toggle("active", ["browse","offer","want"][i] === name);
+    t.classList.toggle("active", ["browse","requests","offer","want"][i] === name);
   });
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
   document.getElementById("panel-"+name).classList.add("active");

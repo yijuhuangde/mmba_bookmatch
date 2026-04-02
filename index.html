@@ -791,39 +791,23 @@ function renderRequests() {
 // ── OFFER A BOOK FORM ─────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdZ7NyT8L2VqAvyCD2ZlmiNph0DWHHjYZz4APThvqxigYj-_6bAxC9YXaZMPORYdJTzQ/exec";
 
-async function postToSheet(spreadsheetId, row) {
-  try {
-    const params = new URLSearchParams({
-      action: "append",
-      spreadsheetId,
-      row: JSON.stringify(row)
-    });
-    await fetch(`${APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "no-cors" });
-  } catch(e) { console.warn("Sheet post failed:", e); }
+function callScript(params) {
+  // Use Image() to fire GET request — works on all browsers/mobile without CORS issues
+  const url = `${APPS_SCRIPT_URL}?${new URLSearchParams(params)}`;
+  const img = new Image();
+  img.src = url;
 }
 
-async function updateSheetStatus(spreadsheetId, book, contact) {
-  try {
-    const params = new URLSearchParams({
-      action: "updateStatus",
-      spreadsheetId,
-      book,
-      contact
-    });
-    await fetch(`${APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "no-cors" });
-  } catch(e) { console.warn("Sheet update failed:", e); }
+function postToSheet(spreadsheetId, row) {
+  callScript({ action: "append", spreadsheetId, row: JSON.stringify(row) });
 }
 
-async function deleteSheetRow(spreadsheetId, book, contact) {
-  try {
-    const params = new URLSearchParams({
-      action: "deleteRow",
-      spreadsheetId,
-      book,
-      contact
-    });
-    await fetch(`${APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "no-cors" });
-  } catch(e) { console.warn("Sheet delete failed:", e); }
+function updateSheetStatus(spreadsheetId, book, contact) {
+  callScript({ action: "updateStatus", spreadsheetId, book, contact });
+}
+
+function deleteSheetRow(spreadsheetId, book, contact) {
+  callScript({ action: "deleteRow", spreadsheetId, book, contact });
 }
 
 function submitOffer() {

@@ -637,9 +637,11 @@ async function fetchSheet(sheetId, colMap) {
     const text = await res.text();
     const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
     const rows = json.table.rows;
-    return rows.map(r => {
+    return rows.map((r, idx) => {
       const get = i => (r.c && r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : "";
-      return Object.fromEntries(Object.entries(colMap).map(([k,i]) => [k, get(i)]));
+      const item = Object.fromEntries(Object.entries(colMap).map(([k,i]) => [k, get(i)]));
+      item.rowIndex = idx + 2; // +1 for 0-based, +1 for header row → sheet row number
+      return item;
     }).filter(r => r.book);
   } catch(e) {
     console.warn("Sheet fetch failed:", sheetId, e);
@@ -804,12 +806,12 @@ function postToSheet(spreadsheetId, row) {
   callScript({ action: "append", spreadsheetId, row: JSON.stringify(row) });
 }
 
-function updateSheetStatus(spreadsheetId, book, contact) {
-  callScript({ action: "updateStatus", spreadsheetId, book, contact });
+function updateSheetStatus(spreadsheetId, rowIndex) {
+  callScript({ action: "updateStatus", spreadsheetId, rowIndex });
 }
 
-function deleteSheetRow(spreadsheetId, book, contact) {
-  callScript({ action: "deleteRow", spreadsheetId, book, contact });
+function deleteSheetRow(spreadsheetId, rowIndex) {
+  callScript({ action: "deleteRow", spreadsheetId, rowIndex });
 }
 
 function submitOffer() {
@@ -922,11 +924,7 @@ function confirmPin() {
 
   if (pendingToggleType === "offer") {
     if (!pendingItem || (!isAdmin && entered !== pendingItem.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    updateSheetStatus(ALUMNI_SHEET_ID, pendingItem.book, pendingItem.contact);
-    if (pendingItem.local) {
-      const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-      localStorage.setItem("bm_offers", JSON.stringify(stored.filter(b => b.id !== pendingItem.id)));
-    }
+    if (pendingItem.rowIndex) updateSheetStatus(ALUMNI_SHEET_ID, pendingItem.rowIndex);
     alumniData = alumniData.filter(b => b !== pendingItem);
     closeModal();
     updateStats();
@@ -934,11 +932,7 @@ function confirmPin() {
 
   } else if (pendingToggleType === "request") {
     if (!pendingItem || (!isAdmin && entered !== pendingItem.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    deleteSheetRow(STUDENT_SHEET_ID, pendingItem.book, pendingItem.contact);
-    if (pendingItem.local) {
-      const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
-      localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== pendingItem.id)));
-    }
+    if (pendingItem.rowIndex) deleteSheetRow(STUDENT_SHEET_ID, pendingItem.rowIndex);
     studentData = studentData.filter(r => r !== pendingItem);
     closeModal();
     updateStats();

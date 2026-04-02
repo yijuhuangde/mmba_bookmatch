@@ -530,10 +530,6 @@
           <label for="off-region">Country / Region</label>
           <input type="text" id="off-region" placeholder="e.g. Belgium">
         </div>
-        <div class="form-group full">
-          <label for="off-pin">Set a PIN to manage your listing *</label>
-          <input type="text" id="off-pin" placeholder="e.g. mmba2024 — you'll need this to mark the book as taken">
-        </div>
       </div>
       <button class="btn-submit" onclick="submitOffer()">List my book</button>
       <div class="success-msg" id="off-success">✓ Your book is now listed! Students looking for it will see your contact.</div>
@@ -588,10 +584,6 @@
           <label for="req-region">Country / Region</label>
           <input type="text" id="req-region" placeholder="e.g. Belgium">
         </div>
-        <div class="form-group full">
-          <label for="req-pin">Set a PIN to manage your request *</label>
-          <input type="text" id="req-pin" placeholder="e.g. mmba2024 — you'll need this to remove the request once found">
-        </div>
       </div>
       <button class="btn-submit" onclick="submitRequest()">Submit request</button>
       <div class="success-msg" id="req-success">✓ Request saved! Alumni with this book will see your listing.</div>
@@ -604,7 +596,7 @@
 <div class="modal-backdrop" id="pin-modal">
   <div class="modal">
     <h3 id="pin-title">Confirm your identity</h3>
-    <p id="pin-desc">Enter the PIN you set when you listed this book to update its status.</p>
+    <p id="pin-desc">Enter your PIN to update the status. If you don't have a PIN, use <strong>mmba</strong>.</p>
     <input type="text" id="pin-input" placeholder="Your PIN" maxlength="20" style="letter-spacing:0.1em;">
     <div class="modal-err" id="pin-err">Incorrect PIN. Please try again.</div>
     <div class="modal-btns">
@@ -724,11 +716,11 @@ function renderBrowse() {
     const isTaken   = (b.status||"").toLowerCase() === "taken";
     const modeKey   = (b.mode||"sell").toLowerCase();
     const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
-    const toggleBtn = b.local && b.id ? `
-      <button class="status-toggle" onclick="requestToggle('${b.id}')">
+    const toggleBtn = `
+      <button class="status-toggle" onclick="requestToggle('${b.id || "sheet_" + encodeURIComponent(b.book + b.name)}', ${JSON.stringify(b.local||false)})">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Mark as taken
-      </button>` : "";
+      </button>`;
     return `<div class="book-card ${matches.length ? "has-match":""}">
       <div class="card-top">
         <div class="card-title">${esc(b.book)}</div>
@@ -770,11 +762,11 @@ function renderRequests() {
     const modeLabel = (r.mode||"buy/rent");
     const modeKey   = modeLabel.toLowerCase().includes("rent") && modeLabel.toLowerCase().includes("buy") ? "want-rent"
                     : modeLabel.toLowerCase().includes("rent") ? "want-rent" : "want-buy";
-    const foundBtn  = r.local && r.id ? `
-      <button class="status-toggle is-taken" onclick="requestFoundIt('${r.id}')">
+    const foundBtn = `
+      <button class="status-toggle is-taken" onclick="requestFoundIt('${r.id || "sheet_" + encodeURIComponent(r.book + r.name)}', ${JSON.stringify(r.local||false)})">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Found it — remove request
-      </button>` : "";
+      </button>`;
     return `<div class="book-card ${offers.length?"has-match":""}">
       <div class="card-top">
         <div class="card-title">${esc(r.book)}</div>
@@ -818,25 +810,18 @@ function submitOffer() {
   const mode    = document.getElementById("off-mode").value;
   const price   = document.getElementById("off-price").value.trim();
   const region  = document.getElementById("off-region").value.trim();
-  const pin     = document.getElementById("off-pin").value.trim();
 
   if (!name || !contact || !book) {
     alert("Please fill in Name, Contact, and Book name.");
-    return;
-  }
-  if (!pin) {
-    alert("Please set a PIN so you can update the status later.");
     return;
   }
 
   const timestamp = new Date().toISOString();
   const modeVal   = mode === "Sell" || mode === "Sell or Rent" ? "sell" : "rent";
 
-  // Save to Google Sheets
   postToSheet(ALUMNI_SHEET_ID, [timestamp, name, contact, book, module, mode, price, region, "Available"]);
 
-  // Also save locally for immediate display
-  const entry = { id: "local_" + Date.now(), name, contact, book, module, mode: modeVal, price, region, status: "Available", pin, local: true };
+  const entry = { id: "local_" + Date.now(), name, contact, book, module, mode: modeVal, price, region, status: "Available", local: true };
   alumniData.push(entry);
   const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
   stored.push(entry);
@@ -845,7 +830,7 @@ function submitOffer() {
   updateStats();
   renderBrowse();
   document.getElementById("off-success").style.display = "block";
-  ["off-name","off-contact","off-book","off-price","off-region","off-pin"].forEach(id => document.getElementById(id).value = "");
+  ["off-name","off-contact","off-book","off-price","off-region"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("off-module").value = "";
   document.getElementById("off-mode").value = "Sell";
   setTimeout(() => document.getElementById("off-success").style.display = "none", 4000);
@@ -859,24 +844,17 @@ function submitRequest() {
   const module  = document.getElementById("req-module").value;
   const mode    = document.getElementById("req-mode").value;
   const region  = document.getElementById("req-region").value.trim();
-  const pin     = document.getElementById("req-pin").value.trim();
 
   if (!name || !contact || !book) {
     alert("Please fill in Name, Contact, and Book name.");
     return;
   }
-  if (!pin) {
-    alert("Please set a PIN so you can remove the request once you've found the book.");
-    return;
-  }
 
   const timestamp = new Date().toISOString();
 
-  // Save to Google Sheets
   postToSheet(STUDENT_SHEET_ID, [timestamp, name, contact, book, module, mode, region]);
 
-  // Also save locally for immediate display
-  const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, pin, local: true };
+  const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, local: true };
   studentData.push(entry);
   const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
   stored.push(entry);
@@ -885,7 +863,7 @@ function submitRequest() {
   updateStats();
   renderRequests();
   document.getElementById("req-success").style.display = "block";
-  ["req-name","req-contact","req-book","req-region","req-pin"].forEach(id => document.getElementById(id).value = "");
+  ["req-name","req-contact","req-book","req-region"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("req-module").value = "";
   document.getElementById("req-mode").value = "Buy";
   setTimeout(() => document.getElementById("req-success").style.display = "none", 4000);
@@ -895,24 +873,24 @@ function submitRequest() {
 let pendingToggleId  = null;
 let pendingToggleType = null; // "offer" | "request"
 
-function requestToggle(id) {
+function requestToggle(id, isLocal) {
   pendingToggleId   = id;
   pendingToggleType = "offer";
-  const book = alumniData.find(b => b.id === id);
+  const book = alumniData.find(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) === id);
   document.getElementById("pin-title").textContent = "Mark as taken";
-  document.getElementById("pin-desc").textContent  = `Enter your PIN to confirm "${book.book}" is no longer available. It will be removed from the list.`;
+  document.getElementById("pin-desc").textContent  = `Enter your PIN to remove "${book.book}" from the list. If you don't have a PIN, use mmba.`;
   document.getElementById("pin-input").value = "";
   document.getElementById("pin-err").style.display = "none";
   document.getElementById("pin-modal").classList.add("open");
   setTimeout(() => document.getElementById("pin-input").focus(), 50);
 }
 
-function requestFoundIt(id) {
+function requestFoundIt(id, isLocal) {
   pendingToggleId   = id;
   pendingToggleType = "request";
-  const req = studentData.find(r => r.id === id);
+  const req = studentData.find(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) === id);
   document.getElementById("pin-title").textContent = "Found it!";
-  document.getElementById("pin-desc").textContent  = `Enter your PIN to confirm and remove your request for "${req.book}" from the list.`;
+  document.getElementById("pin-desc").textContent  = `Enter your PIN to remove your request for "${req.book}" from the list. If you don't have a PIN, use mmba.`;
   document.getElementById("pin-input").value = "";
   document.getElementById("pin-err").style.display = "none";
   document.getElementById("pin-modal").classList.add("open");
@@ -930,22 +908,30 @@ function confirmPin() {
   const isAdmin = entered === MASTER_PIN;
 
   if (pendingToggleType === "offer") {
-    const book = alumniData.find(b => b.id === pendingToggleId);
+    const book = alumniData.find(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) === pendingToggleId);
     if (!book || (!isAdmin && entered !== book.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
     book.status = "Taken";
-    const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-    const idx = stored.findIndex(b => b.id === book.id);
-    if (idx !== -1) { stored[idx].status = "Taken"; localStorage.setItem("bm_offers", JSON.stringify(stored)); }
+    // Update localStorage if local entry
+    if (book.local) {
+      const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
+      const idx = stored.findIndex(b => b.id === book.id);
+      if (idx !== -1) { stored[idx].status = "Taken"; localStorage.setItem("bm_offers", JSON.stringify(stored)); }
+    }
+    // Remove from in-memory list so it disappears immediately
+    alumniData = alumniData.filter(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) !== pendingToggleId);
     closeModal();
     updateStats();
     renderBrowse();
 
   } else if (pendingToggleType === "request") {
-    const req = studentData.find(r => r.id === pendingToggleId);
+    const req = studentData.find(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) === pendingToggleId);
     if (!req || (!isAdmin && entered !== req.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    studentData = studentData.filter(r => r.id !== pendingToggleId);
-    const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
-    localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== pendingToggleId)));
+    studentData = studentData.filter(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) !== pendingToggleId);
+    // Update localStorage if local entry
+    if (req.local) {
+      const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
+      localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== req.id)));
+    }
     closeModal();
     updateStats();
     renderRequests();

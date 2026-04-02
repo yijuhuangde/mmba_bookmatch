@@ -646,8 +646,9 @@ async function loadData() {
     document.getElementById("config-note").style.display = "none";
   }
 
-  // Merge locally submitted offers
-  alumniData = [...alumniData, ...storedOffers];
+  // Merge locally submitted offers and requests
+  alumniData  = [...alumniData, ...storedOffers];
+  studentData = [...studentData, ...storedReqs];
 
   updateStats();
   renderBrowse();
@@ -732,7 +733,8 @@ function renderBrowse() {
 
 // ── RENDER REQUESTS ───────────────────────────
 function renderRequests() {
-  const q   = document.getElementById("search-requests").value.toLowerCase();
+  const searchEl = document.getElementById("search-requests");
+  const q = searchEl ? searchEl.value.toLowerCase() : "";
   let items = studentData;
   if (q) items = items.filter(r =>
     r.book.toLowerCase().includes(q) ||

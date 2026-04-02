@@ -797,6 +797,19 @@ function renderRequests() {
 }
 
 // ── OFFER A BOOK FORM ─────────────────────────
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdZ7NyT8L2VqAvyCD2ZlmiNph0DWHHjYZz4APThvqxigYj-_6bAxC9YXaZMPORYdJTzQ/exec";
+
+async function postToSheet(spreadsheetId, row) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spreadsheetId, row })
+    });
+  } catch(e) { console.warn("Sheet post failed:", e); }
+}
+
 function submitOffer() {
   const name    = document.getElementById("off-name").value.trim();
   const contact = document.getElementById("off-contact").value.trim();
@@ -816,14 +829,15 @@ function submitOffer() {
     return;
   }
 
-  const entry = {
-    id: "local_" + Date.now(),
-    name, contact, book, module,
-    mode: mode === "Sell" || mode === "Sell or Rent" ? "sell" : "rent",
-    price, region, status: "Available", pin, local: true
-  };
-  alumniData.push(entry);
+  const timestamp = new Date().toISOString();
+  const modeVal   = mode === "Sell" || mode === "Sell or Rent" ? "sell" : "rent";
 
+  // Save to Google Sheets
+  postToSheet(ALUMNI_SHEET_ID, [timestamp, name, contact, book, module, mode, price, region, "Available"]);
+
+  // Also save locally for immediate display
+  const entry = { id: "local_" + Date.now(), name, contact, book, module, mode: modeVal, price, region, status: "Available", pin, local: true };
+  alumniData.push(entry);
   const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
   stored.push(entry);
   localStorage.setItem("bm_offers", JSON.stringify(stored));
@@ -856,9 +870,14 @@ function submitRequest() {
     return;
   }
 
+  const timestamp = new Date().toISOString();
+
+  // Save to Google Sheets
+  postToSheet(STUDENT_SHEET_ID, [timestamp, name, contact, book, module, mode, region]);
+
+  // Also save locally for immediate display
   const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, pin, local: true };
   studentData.push(entry);
-
   const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
   stored.push(entry);
   localStorage.setItem("bm_requests", JSON.stringify(stored));

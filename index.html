@@ -601,7 +601,7 @@
     <div class="modal-err" id="pin-err">Incorrect PIN. Please try again.</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-submit" onclick="confirmPin()">Confirm</button>
+      <button class="btn-submit" onclick="confirmPin()">Update status</button>
     </div>
   </div>
 </div>
@@ -717,7 +717,7 @@ function renderBrowse() {
     const modeKey   = (b.mode||"sell").toLowerCase();
     const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
     const toggleBtn = `
-      <button class="status-toggle" onclick="requestToggle('${b.id || "sheet_" + encodeURIComponent(b.book + b.name)}', ${JSON.stringify(b.local||false)})">
+      <button class="status-toggle" onclick="requestToggle(${alumniData.indexOf(b)})">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Mark as taken
       </button>`;
@@ -763,7 +763,7 @@ function renderRequests() {
     const modeKey   = modeLabel.toLowerCase().includes("rent") && modeLabel.toLowerCase().includes("buy") ? "want-rent"
                     : modeLabel.toLowerCase().includes("rent") ? "want-rent" : "want-buy";
     const foundBtn = `
-      <button class="status-toggle is-taken" onclick="requestFoundIt('${r.id || "sheet_" + encodeURIComponent(r.book + r.name)}', ${JSON.stringify(r.local||false)})">
+      <button class="status-toggle is-taken" onclick="requestFoundIt(${studentData.indexOf(r)})">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Found it — remove request
       </button>`;
@@ -873,10 +873,10 @@ function submitRequest() {
 let pendingToggleId  = null;
 let pendingToggleType = null; // "offer" | "request"
 
-function requestToggle(id, isLocal) {
-  pendingToggleId   = id;
+function requestToggle(idx) {
+  pendingToggleId   = idx;
   pendingToggleType = "offer";
-  const book = alumniData.find(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) === id);
+  const book = alumniData[idx];
   document.getElementById("pin-title").textContent = "Mark as taken";
   document.getElementById("pin-desc").textContent  = `Enter your PIN to remove "${book.book}" from the list. If you don't have a PIN, use mmba.`;
   document.getElementById("pin-input").value = "";
@@ -885,10 +885,10 @@ function requestToggle(id, isLocal) {
   setTimeout(() => document.getElementById("pin-input").focus(), 50);
 }
 
-function requestFoundIt(id, isLocal) {
-  pendingToggleId   = id;
+function requestFoundIt(idx) {
+  pendingToggleId   = idx;
   pendingToggleType = "request";
-  const req = studentData.find(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) === id);
+  const req = studentData[idx];
   document.getElementById("pin-title").textContent = "Found it!";
   document.getElementById("pin-desc").textContent  = `Enter your PIN to remove your request for "${req.book}" from the list. If you don't have a PIN, use mmba.`;
   document.getElementById("pin-input").value = "";
@@ -908,30 +908,25 @@ function confirmPin() {
   const isAdmin = entered === MASTER_PIN;
 
   if (pendingToggleType === "offer") {
-    const book = alumniData.find(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) === pendingToggleId);
+    const book = alumniData[pendingToggleId];
     if (!book || (!isAdmin && entered !== book.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    book.status = "Taken";
-    // Update localStorage if local entry
     if (book.local) {
       const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-      const idx = stored.findIndex(b => b.id === book.id);
-      if (idx !== -1) { stored[idx].status = "Taken"; localStorage.setItem("bm_offers", JSON.stringify(stored)); }
+      localStorage.setItem("bm_offers", JSON.stringify(stored.filter(b => b.id !== book.id)));
     }
-    // Remove from in-memory list so it disappears immediately
-    alumniData = alumniData.filter(b => (b.id || "sheet_" + encodeURIComponent(b.book + b.name)) !== pendingToggleId);
+    alumniData.splice(pendingToggleId, 1);
     closeModal();
     updateStats();
     renderBrowse();
 
   } else if (pendingToggleType === "request") {
-    const req = studentData.find(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) === pendingToggleId);
+    const req = studentData[pendingToggleId];
     if (!req || (!isAdmin && entered !== req.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    studentData = studentData.filter(r => (r.id || "sheet_" + encodeURIComponent(r.book + r.name)) !== pendingToggleId);
-    // Update localStorage if local entry
     if (req.local) {
       const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
       localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== req.id)));
     }
+    studentData.splice(pendingToggleId, 1);
     closeModal();
     updateStats();
     renderRequests();

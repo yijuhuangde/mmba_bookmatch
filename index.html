@@ -717,7 +717,7 @@ function renderBrowse() {
     const modeKey   = (b.mode||"sell").toLowerCase();
     const modeLabel = modeKey === "rent" ? "For rent" : "For sale";
     const toggleBtn = `
-      <button class="status-toggle" onclick="requestToggle(${alumniData.indexOf(b)})">
+      <button class="status-toggle" onclick="requestToggle('${registerItem(b)}')">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Mark as taken
       </button>`;
@@ -755,6 +755,7 @@ function renderRequests() {
   );
 
   const list = document.getElementById("requests-list");
+  if (!list) return;
   if (items.length === 0) { list.innerHTML = '<div class="empty">No requests yet.</div>'; return; }
 
   list.innerHTML = items.map(r => {
@@ -763,7 +764,7 @@ function renderRequests() {
     const modeKey   = modeLabel.toLowerCase().includes("rent") && modeLabel.toLowerCase().includes("buy") ? "want-rent"
                     : modeLabel.toLowerCase().includes("rent") ? "want-rent" : "want-buy";
     const foundBtn = `
-      <button class="status-toggle is-taken" onclick="requestFoundIt(${studentData.indexOf(r)})">
+      <button class="status-toggle is-taken" onclick="requestFoundIt('${registerItem(r)}')">
         <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Found it — remove request
       </button>`;
@@ -891,12 +892,21 @@ function submitRequest() {
   setTimeout(() => document.getElementById("req-success").style.display = "none", 4000);
 }
 
+// ── ITEM LOOKUP MAP ───────────────────────────
+const itemMap = {};
+let itemMapCounter = 0;
+function registerItem(item) {
+  const key = "item_" + (itemMapCounter++);
+  itemMap[key] = item;
+  return key;
+}
+
 // ── STATUS TOGGLE ─────────────────────────────
 let pendingItem      = null;
 let pendingToggleType = null;
 
-function requestToggle(idx) {
-  pendingItem       = alumniData[idx];
+function requestToggle(key) {
+  pendingItem       = itemMap[key];
   pendingToggleType = "offer";
   document.getElementById("pin-title").textContent = "Mark as taken";
   document.getElementById("pin-desc").innerHTML  = `Enter <strong>mmba</strong> to update status.`;
@@ -906,8 +916,8 @@ function requestToggle(idx) {
   setTimeout(() => document.getElementById("pin-input").focus(), 50);
 }
 
-function requestFoundIt(idx) {
-  pendingItem       = studentData[idx];
+function requestFoundIt(key) {
+  pendingItem       = itemMap[key];
   pendingToggleType = "request";
   document.getElementById("pin-title").textContent = "Found it!";
   document.getElementById("pin-desc").innerHTML  = `Enter <strong>mmba</strong> to update status.`;

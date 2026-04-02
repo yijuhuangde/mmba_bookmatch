@@ -792,10 +792,15 @@ function renderRequests() {
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdZ7NyT8L2VqAvyCD2ZlmiNph0DWHHjYZz4APThvqxigYj-_6bAxC9YXaZMPORYdJTzQ/exec";
 
 function callScript(params) {
-  // Use Image() to fire GET request — works on all browsers/mobile without CORS issues
   const url = `${APPS_SCRIPT_URL}?${new URLSearchParams(params)}`;
-  const img = new Image();
-  img.src = url;
+  let iframe = document.getElementById("_script_iframe");
+  if (!iframe) {
+    iframe = document.createElement("iframe");
+    iframe.id = "_script_iframe";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+  }
+  iframe.src = url;
 }
 
 function postToSheet(spreadsheetId, row) {

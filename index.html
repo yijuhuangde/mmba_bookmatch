@@ -618,8 +618,8 @@ const MASTER_PIN = "mmba"; // ← change this anytime to a new master PIN
 // Alumni sheet columns: Timestamp | Name | WhatsApp/email | Book | Module | Sell or rent | Price | Country | Status
 const COL_ALUMNI  = { name:1, contact:2, book:3, module:4, mode:5, price:6, region:7, status:8 };
 
-// Student requests sheet columns: Timestamp | Name | WhatsApp/email | Book | Module | Looking to | Country
-const COL_STUDENT = { name:1, contact:2, book:3, module:4, mode:5, region:6 };
+// Student requests sheet columns: Timestamp | Name | Contact | Book | Module | Region | Mode | Status
+const COL_STUDENT = { name:1, contact:2, book:3, module:4, region:5, mode:6, status:7 };
 
 // ─────────────────────────────────────────────
 
@@ -652,9 +652,9 @@ async function loadData() {
     fetchSheet(STUDENT_SHEET_ID, COL_STUDENT)
   ]);
 
-  // Alumni sheet = all offers, Student sheet = all requests
-  alumniData  = alumni;
-  studentData = students;
+  // Alumni sheet = available offers only, Student sheet = open requests only
+  alumniData  = alumni.filter(r => (r.status||"").toLowerCase() !== "taken");
+  studentData = students.filter(r => (r.status||"").toLowerCase() !== "found");
 
   // Hide config note since sheets are configured
   document.getElementById("config-note").style.display = "none";

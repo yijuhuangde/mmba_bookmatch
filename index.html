@@ -361,6 +361,36 @@
     .stats .stat-card:last-child { grid-column: 1 / -1; }
     header { padding: 0 1rem; }
     main { padding: 1rem 1rem 4rem; }
+
+    /* Tabs: wrap into 2x2 grid on mobile */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+    }
+    .tab {
+      padding: 8px 6px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    /* Cards: tighten up on mobile */
+    .card-top { flex-direction: column; gap: 6px; }
+    .badge-row { justify-content: flex-start; }
+    .book-card { padding: 12px 14px; }
+    .card-meta { gap: 10px; }
+
+    /* Forms: single column */
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+
+    /* Modal fits screen */
+    .modal { width: calc(100vw - 2rem); }
+
+    /* Filter pills scroll horizontally */
+    .filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+    .pill { flex-shrink: 0; }
   }
 </style>
 </head>
@@ -588,17 +618,15 @@
 // ─────────────────────────────────────────────
 //  CONFIGURATION — set your Google Sheets IDs
 // ─────────────────────────────────────────────
-const ALUMNI_SHEET_ID  = "145fMegvrrynNwqX7FPsOlJ9DgFFAOQiaJZr8bnqKZR8"; // alumni offers sheet
-const STUDENT_SHEET_ID = "YOUR_STUDENT_REQUESTS_SHEET_ID";                  // student requests sheet (create new)
+const ALUMNI_SHEET_ID  = "1gfNJDMeFvAjsp_slqrkBdmqh9AqzWjubAOA6ByogbnU";
+const STUDENT_SHEET_ID = "1HGN8lNYQGhgFbfEqvhIlH21KRewSsShC73elwoVduR8";
 
 const MASTER_PIN = "mmba"; // ← change this anytime to a new master PIN
 
-// Column mapping for Alumni sheet (0-indexed, adjust to match your sheet)
-// Expected columns: Timestamp | Offer/Want | Name | Contact | Book | Module | Sell/Rent | Price | Region | Status
-const COL_ALUMNI = { type:1, name:2, contact:3, book:4, module:5, mode:6, price:7, region:8, status:9 };
+// Alumni sheet columns: Timestamp | Name | WhatsApp/email | Book | Module | Sell or rent | Price | Country | Status
+const COL_ALUMNI  = { name:1, contact:2, book:3, module:4, mode:5, price:6, region:7, status:8 };
 
-// Column mapping for Student requests sheet
-// Expected columns: Timestamp | Name | Contact | Book | Module | Mode | Region
+// Student requests sheet columns: Timestamp | Name | WhatsApp/email | Book | Module | Looking to | Country
 const COL_STUDENT = { name:1, contact:2, book:3, module:4, mode:5, region:6 };
 
 // ─────────────────────────────────────────────
@@ -629,25 +657,18 @@ async function fetchSheet(sheetId, colMap) {
 async function loadData() {
   const [alumni, students] = await Promise.all([
     fetchSheet(ALUMNI_SHEET_ID, COL_ALUMNI),
-    STUDENT_SHEET_ID !== "YOUR_STUDENT_REQUESTS_SHEET_ID"
-      ? fetchSheet(STUDENT_SHEET_ID, COL_STUDENT)
-      : Promise.resolve([])
+    fetchSheet(STUDENT_SHEET_ID, COL_STUDENT)
   ]);
 
-  // Alumni sheet has both offer & want rows — split them
-  alumniData  = alumni.filter(r => r.type && r.type.toLowerCase().includes("have"));
-  studentData = [
-    ...students,
-    ...alumni.filter(r => r.type && r.type.toLowerCase().includes("want"))
-  ];
+  // Alumni sheet = all offers, Student sheet = all requests
+  alumniData  = alumni;
+  studentData = students;
 
-  // If sheet ID is real, hide config note
-  if (ALUMNI_SHEET_ID !== "YOUR_ALUMNI_SHEET_ID") {
-    document.getElementById("config-note").style.display = "none";
-  }
+  // Hide config note since sheets are configured
+  document.getElementById("config-note").style.display = "none";
 
   // Merge locally submitted offers and requests
-  alumniData  = [...alumniData, ...storedOffers];
+  alumniData  = [...alumniData,  ...storedOffers];
   studentData = [...studentData, ...storedReqs];
 
   updateStats();

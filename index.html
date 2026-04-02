@@ -892,15 +892,14 @@ function submitRequest() {
 }
 
 // ── STATUS TOGGLE ─────────────────────────────
-let pendingToggleId  = null;
-let pendingToggleType = null; // "offer" | "request"
+let pendingItem      = null;
+let pendingToggleType = null;
 
 function requestToggle(idx) {
-  pendingToggleId   = idx;
+  pendingItem       = alumniData[idx];
   pendingToggleType = "offer";
-  const book = alumniData[idx];
   document.getElementById("pin-title").textContent = "Mark as taken";
-  document.getElementById("pin-desc").textContent  = `Enter your PIN to remove "${book.book}" from the list. If you don't have a PIN, use mmba.`;
+  document.getElementById("pin-desc").innerHTML  = `Enter <strong>mmba</strong> to update status.`;
   document.getElementById("pin-input").value = "";
   document.getElementById("pin-err").style.display = "none";
   document.getElementById("pin-modal").classList.add("open");
@@ -908,11 +907,10 @@ function requestToggle(idx) {
 }
 
 function requestFoundIt(idx) {
-  pendingToggleId   = idx;
+  pendingItem       = studentData[idx];
   pendingToggleType = "request";
-  const req = studentData[idx];
   document.getElementById("pin-title").textContent = "Found it!";
-  document.getElementById("pin-desc").textContent  = `Enter your PIN to remove your request for "${req.book}" from the list. If you don't have a PIN, use mmba.`;
+  document.getElementById("pin-desc").innerHTML  = `Enter <strong>mmba</strong> to update status.`;
   document.getElementById("pin-input").value = "";
   document.getElementById("pin-err").style.display = "none";
   document.getElementById("pin-modal").classList.add("open");
@@ -921,7 +919,7 @@ function requestFoundIt(idx) {
 
 function closeModal() {
   document.getElementById("pin-modal").classList.remove("open");
-  pendingToggleId   = null;
+  pendingItem       = null;
   pendingToggleType = null;
 }
 
@@ -930,31 +928,25 @@ function confirmPin() {
   const isAdmin = entered === MASTER_PIN;
 
   if (pendingToggleType === "offer") {
-    const book = alumniData[pendingToggleId];
-    if (!book || (!isAdmin && entered !== book.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    // Sync to Google Sheets
-    updateSheetStatus(ALUMNI_SHEET_ID, book.book, book.contact);
-    // Remove locally
-    if (book.local) {
+    if (!pendingItem || (!isAdmin && entered !== pendingItem.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
+    updateSheetStatus(ALUMNI_SHEET_ID, pendingItem.book, pendingItem.contact);
+    if (pendingItem.local) {
       const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
-      localStorage.setItem("bm_offers", JSON.stringify(stored.filter(b => b.id !== book.id)));
+      localStorage.setItem("bm_offers", JSON.stringify(stored.filter(b => b.id !== pendingItem.id)));
     }
-    alumniData.splice(pendingToggleId, 1);
+    alumniData = alumniData.filter(b => b !== pendingItem);
     closeModal();
     updateStats();
     renderBrowse();
 
   } else if (pendingToggleType === "request") {
-    const req = studentData[pendingToggleId];
-    if (!req || (!isAdmin && entered !== req.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
-    // Sync to Google Sheets
-    deleteSheetRow(STUDENT_SHEET_ID, req.book, req.contact);
-    // Remove locally
-    if (req.local) {
+    if (!pendingItem || (!isAdmin && entered !== pendingItem.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
+    deleteSheetRow(STUDENT_SHEET_ID, pendingItem.book, pendingItem.contact);
+    if (pendingItem.local) {
       const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
-      localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== req.id)));
+      localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== pendingItem.id)));
     }
-    studentData.splice(pendingToggleId, 1);
+    studentData = studentData.filter(r => r !== pendingItem);
     closeModal();
     updateStats();
     renderRequests();

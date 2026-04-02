@@ -596,9 +596,9 @@
 <div class="modal-backdrop" id="pin-modal">
   <div class="modal">
     <h3 id="pin-title">Confirm your identity</h3>
-    <p id="pin-desc">Enter your PIN to update the status. If you don't have a PIN, use <strong>mmba</strong>.</p>
-    <input type="text" id="pin-input" placeholder="Your PIN" maxlength="20" style="letter-spacing:0.1em;">
-    <div class="modal-err" id="pin-err">Incorrect PIN. Please try again.</div>
+    <p id="pin-desc">Enter <strong>mmba</strong> to update status.</p>
+    <input type="text" id="pin-input" placeholder="Enter mmba" maxlength="20" style="letter-spacing:0.1em;">
+    <div class="modal-err" id="pin-err">Incorrect PIN. Please enter mmba.</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-submit" onclick="confirmPin()">Update status</button>
@@ -797,9 +797,31 @@ async function postToSheet(spreadsheetId, row) {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ spreadsheetId, row })
+      body: JSON.stringify({ spreadsheetId, action: "append", row })
     });
   } catch(e) { console.warn("Sheet post failed:", e); }
+}
+
+async function updateSheetStatus(spreadsheetId, book, contact) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spreadsheetId, action: "updateStatus", book, contact })
+    });
+  } catch(e) { console.warn("Sheet update failed:", e); }
+}
+
+async function deleteSheetRow(spreadsheetId, book, contact) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spreadsheetId, action: "deleteRow", book, contact })
+    });
+  } catch(e) { console.warn("Sheet delete failed:", e); }
 }
 
 function submitOffer() {
@@ -910,6 +932,9 @@ function confirmPin() {
   if (pendingToggleType === "offer") {
     const book = alumniData[pendingToggleId];
     if (!book || (!isAdmin && entered !== book.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
+    // Sync to Google Sheets
+    updateSheetStatus(ALUMNI_SHEET_ID, book.book, book.contact);
+    // Remove locally
     if (book.local) {
       const stored = JSON.parse(localStorage.getItem("bm_offers") || "[]");
       localStorage.setItem("bm_offers", JSON.stringify(stored.filter(b => b.id !== book.id)));
@@ -922,6 +947,9 @@ function confirmPin() {
   } else if (pendingToggleType === "request") {
     const req = studentData[pendingToggleId];
     if (!req || (!isAdmin && entered !== req.pin)) { document.getElementById("pin-err").style.display = "block"; return; }
+    // Sync to Google Sheets
+    deleteSheetRow(STUDENT_SHEET_ID, req.book, req.contact);
+    // Remove locally
     if (req.local) {
       const stored = JSON.parse(localStorage.getItem("bm_requests") || "[]");
       localStorage.setItem("bm_requests", JSON.stringify(stored.filter(r => r.id !== req.id)));

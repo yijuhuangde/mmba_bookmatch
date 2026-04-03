@@ -795,11 +795,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdZ7NyT8L2VqAv
 
 function callScript(params) {
   const url = `${APPS_SCRIPT_URL}?${new URLSearchParams(params)}`;
-  const script = document.createElement("script");
-  script.src = url;
-  script.onerror = () => {};
-  document.head.appendChild(script);
-  setTimeout(() => { try { document.head.removeChild(script); } catch(e) {} }, 5000);
+  fetch(url).catch(() => {});
 }
 
 function postToSheet(spreadsheetId, row) {

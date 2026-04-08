@@ -619,8 +619,8 @@ const MASTER_PIN = "mmba"; // ← change this anytime to a new master PIN
 // Alumni sheet columns: Timestamp | Name | WhatsApp/email | Book | Module | Sell or rent | Price | Country | Status
 const COL_ALUMNI  = { name:1, contact:2, book:3, module:4, mode:5, price:6, region:7, status:8 };
 
-// Student requests sheet columns: Timestamp | Name | Contact | Book | Module | Region | Mode | Status
-const COL_STUDENT = { name:1, contact:2, book:3, module:4, region:5, mode:6, status:7 };
+// Student requests sheet columns: Timestamp | Name | Contact | Book | Module | Mode | Price | Region | Status
+const COL_STUDENT = { name:1, contact:2, book:3, module:4, mode:5, price:6, region:7, status:8 };
 
 // ─────────────────────────────────────────────
 
@@ -858,7 +858,7 @@ function submitRequest() {
 
   const timestamp = new Date().toISOString();
 
-  postToSheet(STUDENT_SHEET_ID, [timestamp, name, contact, book, module, mode, region]);
+  postToSheet(STUDENT_SHEET_ID, [timestamp, name, contact, book, module, mode, "", region]);
 
   // Show immediately without localStorage (Google Sheets is source of truth)
   const entry = { id: "req_" + Date.now(), name, contact, book, module, mode, region, local: true };
